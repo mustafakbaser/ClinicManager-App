@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  body {
+    @apply m-0 min-h-screen bg-gray-100;
+  }
+}
+
+@layer components {
+  .datepicker {
+    @apply w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500;
+  }
+
+  .form-grid {
+    @apply grid grid-cols-1 gap-6 sm:grid-cols-2;
+  }
+
+  .form-actions {
+    @apply mt-6 flex justify-end space-x-3;
+  }
+}
