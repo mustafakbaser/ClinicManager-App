@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { staffService } from '../services/staffService';
-import PageHeader from '../components/layout/PageHeader';
 import PageContainer from '../components/layout/PageContainer';
-import Button from '../components/ui/Button';
+import StaffHeader from '../components/staff/StaffHeader';
 import StaffForm from '../components/staff/StaffForm';
-import StaffList from '../components/staff/StaffList';
+import StaffCard from '../components/staff/StaffCard';
 
 export default function Staff() {
   const queryClient = useQueryClient();
@@ -24,9 +23,6 @@ export default function Staff() {
       queryClient.invalidateQueries(['staff']);
       toast.success('Personel başarıyla eklendi');
       handleCloseForm();
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Personel eklenirken bir hata oluştu');
     }
   });
 
@@ -36,9 +32,6 @@ export default function Staff() {
       queryClient.invalidateQueries(['staff']);
       toast.success('Personel bilgileri güncellendi');
       handleCloseForm();
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Personel bilgileri güncellenirken bir hata oluştu');
     }
   });
 
@@ -47,30 +40,8 @@ export default function Staff() {
     onSuccess: () => {
       queryClient.invalidateQueries(['staff']);
       toast.success('Personel kaydı silindi');
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Personel kaydı silinirken bir hata oluştu');
     }
   });
-
-  const handleSubmit = (formData) => {
-    if (editingStaff) {
-      updateMutation.mutate({ id: editingStaff.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
-    }
-  };
-
-  const handleEdit = (staff) => {
-    setEditingStaff(staff);
-    setShowForm(true);
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm('Bu personeli silmek istediğinizden emin misiniz?')) {
-      deleteMutation.mutate(id);
-    }
-  };
 
   const handleCloseForm = () => {
     setShowForm(false);
@@ -79,25 +50,39 @@ export default function Staff() {
 
   return (
     <PageContainer isLoading={isLoading} error={error}>
-      <PageHeader title="Personel">
-        <Button onClick={() => setShowForm(true)}>
-          Yeni Personel
-        </Button>
-      </PageHeader>
+      <StaffHeader onNewStaff={() => setShowForm(true)} />
 
       {showForm && (
         <StaffForm
-          onSubmit={handleSubmit}
-          onCancel={handleCloseForm}
           initialData={editingStaff}
+          onSubmit={(data) => {
+            if (editingStaff) {
+              updateMutation.mutate({ id: editingStaff.id, data });
+            } else {
+              createMutation.mutate(data);
+            }
+          }}
+          onCancel={handleCloseForm}
         />
       )}
 
-      <StaffList
-        staff={staff}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {staff.map((person) => (
+          <StaffCard
+            key={person.id}
+            staff={person}
+            onEdit={(staff) => {
+              setEditingStaff(staff);
+              setShowForm(true);
+            }}
+            onDelete={(id) => {
+              if (window.confirm('Bu personeli silmek istediğinizden emin misiniz?')) {
+                deleteMutation.mutate(id);
+              }
+            }}
+          />
+        ))}
+      </div>
     </PageContainer>
   );
 }

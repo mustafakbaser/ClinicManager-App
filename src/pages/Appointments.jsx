@@ -2,20 +2,20 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { appointmentService } from '../services/appointmentService';
-import PageHeader from '../components/layout/PageHeader';
 import PageContainer from '../components/layout/PageContainer';
-import Button from '../components/ui/Button';
+import AppointmentHeader from '../components/appointments/AppointmentHeader';
 import AppointmentForm from '../components/appointments/AppointmentForm';
+import AppointmentFilters from '../components/appointments/AppointmentFilters';
 import AppointmentList from '../components/appointments/AppointmentList';
-import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Appointments() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [filters, setFilters] = useState({});
 
   const { data: appointments = [], isLoading, error } = useQuery({
-    queryKey: ['appointments'],
-    queryFn: () => appointmentService.getAll()
+    queryKey: ['appointments', filters],
+    queryFn: () => appointmentService.getAll(filters)
   });
 
   const createMutation = useMutation({
@@ -35,9 +35,6 @@ export default function Appointments() {
     onSuccess: () => {
       queryClient.invalidateQueries(['appointments']);
       toast.success('Randevu durumu güncellendi');
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Randevu durumu güncellenirken bir hata oluştu');
     }
   });
 
@@ -46,45 +43,37 @@ export default function Appointments() {
     onSuccess: () => {
       queryClient.invalidateQueries(['appointments']);
       toast.success('Randevu başarıyla silindi');
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Randevu silinirken bir hata oluştu');
     }
   });
 
-  const handleUpdateStatus = (id, currentStatus) => {
-    const newStatus = currentStatus === 'Bekliyor' ? 'Tamamlandı' : 'Bekliyor';
-    updateStatusMutation.mutate({ id, status: newStatus });
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm('Bu randevuyu silmek istediğinizden emin misiniz?')) {
-      deleteMutation.mutate(id);
-    }
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   return (
     <PageContainer isLoading={isLoading} error={error}>
-      <PageHeader title="Randevular">
-        <Button onClick={() => setShowForm(true)}>
-          Yeni Randevu
-        </Button>
-      </PageHeader>
-
+      <AppointmentHeader onNewAppointment={() => setShowForm(true)} />
+      
       {showForm && (
         <AppointmentForm
-          onSubmit={(formData) => createMutation.mutate(formData)}
+          onSubmit={(data) => createMutation.mutate(data)}
           onCancel={() => setShowForm(false)}
-          isLoading={createMutation.isLoading}
         />
       )}
 
+      <AppointmentFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+      />
+
       <AppointmentList
         appointments={appointments}
-        onUpdateStatus={handleUpdateStatus}
-        onDelete={handleDelete}
-        isUpdating={updateStatusMutation.isLoading}
-        isDeleting={deleteMutation.isLoading}
+        onUpdateStatus={(id, status) => updateStatusMutation.mutate({ id, status })}
+        onDelete={(id) => {
+          if (window.confirm('Bu randevuyu silmek istediğinizden emin misiniz?')) {
+            deleteMutation.mutate(id);
+          }
+        }}
       />
     </PageContainer>
   );
