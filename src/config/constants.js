@@ -21,4 +21,7 @@ export const ERROR_MESSAGES = {
   NOT_FOUND: 'İstenilen kayıt bulunamadı.',
   UNAUTHORIZED: 'Bu işlem için yetkiniz bulunmamaktadır.',
   DUPLICATE_TCKN: 'Bu TCKN numarası ile kayıtlı bir hasta bulunmaktadır.',
+  INVALID_EMAIL: 'Geçersiz e-posta adresi.',
+  INVALID_PHONE: 'Geçersiz telefon numarası.',
+  REQUIRED_FIELD: 'Bu alan zorunludur.',
 };
