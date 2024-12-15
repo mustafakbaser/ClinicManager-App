@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { TABLES, STATUS } from '../config/constants';
 import { startOfDay, endOfDay, subDays } from 'date-fns';
-import { appointmentQueries } from '../models/queries';
+import { appointmentQueries } from '../models/queries/appointmentQueries';
 
 // Helper functions
 const getDateRange = () => {

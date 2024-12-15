@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { TABLES } from '../config/constants';
-import { appointmentQueries } from './queries';
+import { appointmentQueries } from './queries/appointmentQueries';
 import { buildSearchQuery } from '../utils/queryBuilder';
 
 const transformAppointment = (appointment) => ({
@@ -22,7 +22,5 @@ export const appointmentModel = {
 
     if (error) throw error;
     return data?.map(transformAppointment) || [];
-  },
-
-  // ... rest of the code remains the same
+  }
 };
