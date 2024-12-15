@@ -3,10 +3,11 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { CalendarIcon, UserIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import Card from '../ui/Card';
 
-export default function RecentAppointments({ appointments }) {
+export default function RecentAppointments({ appointments = [] }) {
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
+    <Card>
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Son Randevular</h2>
@@ -60,8 +61,13 @@ export default function RecentAppointments({ appointments }) {
               </div>
             </li>
           ))}
+          {appointments.length === 0 && (
+            <li className="p-6 text-center text-sm text-gray-500">
+              Henüz randevu kaydı bulunmamaktadır.
+            </li>
+          )}
         </ul>
       </div>
-    </div>
+    </Card>
   );
 }

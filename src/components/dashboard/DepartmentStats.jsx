@@ -1,11 +1,12 @@
 import React from 'react';
 import { BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import Card from '../ui/Card';
 
-export default function DepartmentStats({ stats }) {
-  const maxCount = Math.max(...stats.map(s => s.count));
+export default function DepartmentStats({ stats = [] }) {
+  const maxCount = Math.max(...stats.map(s => s.count || 0), 1);
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
+    <Card>
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">Bölüm İstatistikleri</h2>
         <p className="mt-1 text-sm text-gray-500">Son 30 günlük randevu dağılımı</p>
@@ -39,8 +40,13 @@ export default function DepartmentStats({ stats }) {
               </div>
             </div>
           ))}
+          {stats.length === 0 && (
+            <p className="text-sm text-gray-500 text-center py-4">
+              Henüz randevu kaydı bulunmamaktadır.
+            </p>
+          )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

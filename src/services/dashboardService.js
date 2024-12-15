@@ -1,72 +1,94 @@
 import { supabase } from '../lib/supabase';
 import { TABLES, STATUS } from '../config/constants';
+import { startOfDay, endOfDay, subDays } from 'date-fns';
+import { appointmentQueries } from '../models/queries';
+
+// Helper functions
+const getDateRange = () => {
+  const today = new Date();
+  return {
+    startDate: startOfDay(today).toISOString(),
+    endDate: endOfDay(today).toISOString(),
+    thirtyDaysAgo: startOfDay(subDays(today, 30)).toISOString()
+  };
+};
+
+const transformAppointment = (appointment) => ({
+  ...appointment,
+  patient_name: appointment.patients?.name,
+  doctor_name: appointment.staff?.name,
+  department_name: appointment.departments?.name
+});
+
+const getCounts = async () => {
+  const { startDate, endDate } = getDateRange();
+  
+  const counts = await Promise.all([
+    supabase.from(TABLES.PATIENTS).select('*', { count: 'exact', head: true }),
+    supabase.from(TABLES.STAFF).select('*', { count: 'exact', head: true }),
+    supabase.from(TABLES.APPOINTMENTS).select('*', { count: 'exact', head: true }),
+    supabase.from(TABLES.APPOINTMENTS)
+      .select('*', { count: 'exact', head: true })
+      .eq('status', STATUS.PENDING),
+    supabase.from(TABLES.APPOINTMENTS)
+      .select('*', { count: 'exact', head: true })
+      .gte('appointment_date', startDate)
+      .lt('appointment_date', endDate),
+    supabase.from(TABLES.DEPARTMENTS).select('*', { count: 'exact', head: true })
+  ]);
+
+  return {
+    totalPatients: counts[0].count || 0,
+    totalDoctors: counts[1].count || 0,
+    totalAppointments: counts[2].count || 0,
+    pendingAppointments: counts[3].count || 0,
+    todayAppointments: counts[4].count || 0,
+    totalDepartments: counts[5].count || 0
+  };
+};
+
+const getRecentAppointments = async () => {
+  const { data, error } = await supabase
+    .from(TABLES.APPOINTMENTS)
+    .select(appointmentQueries.base)
+    .order('appointment_date', { ascending: false })
+    .limit(5);
+
+  if (error) throw error;
+  return data?.map(transformAppointment) || [];
+};
+
+const getDepartmentStats = async () => {
+  const { thirtyDaysAgo } = getDateRange();
+  
+  const { data, error } = await supabase
+    .from(TABLES.APPOINTMENTS)
+    .select(appointmentQueries.withStats)
+    .gte('appointment_date', thirtyDaysAgo);
+
+  if (error) throw error;
+
+  // Group and count appointments by department
+  const stats = data.reduce((acc, curr) => {
+    const departmentId = curr.department_id;
+    const department = curr.departments;
+    
+    if (!acc[departmentId]) {
+      acc[departmentId] = {
+        department_id: departmentId,
+        department,
+        count: 0
+      };
+    }
+    acc[departmentId].count++;
+    return acc;
+  }, {});
+
+  return Object.values(stats);
+};
 
 export const dashboardService = {
-  async getStats() {
-    const [
-      { count: totalPatients },
-      { count: totalDoctors },
-      { count: totalAppointments },
-      { count: pendingAppointments },
-      { count: todayAppointments },
-      { count: totalDepartments }
-    ] = await Promise.all([
-      supabase.from(TABLES.PATIENTS).select('*', { count: 'exact', head: true }),
-      supabase.from(TABLES.DOCTORS).select('*', { count: 'exact', head: true }),
-      supabase.from(TABLES.APPOINTMENTS).select('*', { count: 'exact', head: true }),
-      supabase.from(TABLES.APPOINTMENTS)
-        .select('*', { count: 'exact', head: true })
-        .eq('status', STATUS.PENDING),
-      supabase.from(TABLES.APPOINTMENTS)
-        .select('*', { count: 'exact', head: true })
-        .gte('appointment_date', new Date().toISOString().split('T')[0])
-        .lt('appointment_date', new Date(Date.now() + 86400000).toISOString().split('T')[0]),
-      supabase.from(TABLES.DEPARTMENTS).select('*', { count: 'exact', head: true })
-    ]);
-
-    return {
-      totalPatients: totalPatients || 0,
-      totalDoctors: totalDoctors || 0,
-      totalAppointments: totalAppointments || 0,
-      pendingAppointments: pendingAppointments || 0,
-      todayAppointments: todayAppointments || 0,
-      totalDepartments: totalDepartments || 0
-    };
-  },
-
-  async getRecentAppointments() {
-    const { data, error } = await supabase
-      .from(TABLES.APPOINTMENTS)
-      .select(`
-        *,
-        patient:patients(name),
-        doctor:doctors(name),
-        department:departments(name)
-      `)
-      .order('appointment_date', { ascending: false })
-      .limit(5);
-
-    if (error) throw error;
-    return data?.map(appointment => ({
-      ...appointment,
-      patient_name: appointment.patient?.name,
-      doctor_name: appointment.doctor?.name,
-      department_name: appointment.department?.name
-    })) || [];
-  },
-
-  async getDepartmentStats() {
-    const { data, error } = await supabase
-      .from(TABLES.APPOINTMENTS)
-      .select(`
-        department:departments(name),
-        count
-      `)
-      .select('department_id')
-      .gt('appointment_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-      .group('department_id');
-
-    if (error) throw error;
-    return data || [];
-  }
+  getStats: getCounts,
+  getRecentAppointments,
+  getDepartmentStats
 };

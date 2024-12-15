@@ -1,45 +1,34 @@
 import { supabase } from '../lib/supabase';
 import { TABLES } from '../config/constants';
+import { appointmentQueries } from './queries';
 
-export const appointmentQueries = {
-  baseSelect: `
-    id,
-    appointment_date,
-    status,
-    created_at,
-    patients!appointments_patient_id_fkey (id, name),
-    staff!appointments_doctor_id_fkey (id, name, department),
-    departments!appointments_department_id_fkey (id, name)
-  `,
-
-  transformAppointment: (appointment) => ({
-    ...appointment,
-    patient_name: appointment.patients?.name,
-    doctor_name: appointment.staff?.name,
-    department_name: appointment.departments?.name
-  })
-};
+const transformAppointment = (appointment) => ({
+  ...appointment,
+  patient_name: appointment.patients?.name,
+  doctor_name: appointment.staff?.name,
+  department_name: appointment.departments?.name
+});
 
 export const appointmentModel = {
   async findAll() {
     const { data, error } = await supabase
       .from(TABLES.APPOINTMENTS)
-      .select(appointmentQueries.baseSelect)
+      .select(appointmentQueries.base)
       .order('appointment_date', { ascending: false });
 
     if (error) throw error;
-    return data?.map(appointmentQueries.transformAppointment) || [];
+    return data?.map(transformAppointment) || [];
   },
 
   async create(appointmentData) {
     const { data, error } = await supabase
       .from(TABLES.APPOINTMENTS)
       .insert([appointmentData])
-      .select(appointmentQueries.baseSelect)
+      .select(appointmentQueries.base)
       .single();
 
     if (error) throw error;
-    return appointmentQueries.transformAppointment(data);
+    return transformAppointment(data);
   },
 
   async updateStatus(id, status) {
@@ -47,11 +36,11 @@ export const appointmentModel = {
       .from(TABLES.APPOINTMENTS)
       .update({ status })
       .eq('id', id)
-      .select(appointmentQueries.baseSelect)
+      .select(appointmentQueries.base)
       .single();
 
     if (error) throw error;
-    return appointmentQueries.transformAppointment(data);
+    return transformAppointment(data);
   },
 
   async delete(id) {
