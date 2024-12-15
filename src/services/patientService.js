@@ -1,100 +1,84 @@
 import { supabase } from '../lib/supabase';
 import { TABLES, ERROR_MESSAGES } from '../config/constants';
+import { patientQueries } from '../models/queries';
+import { transformPatientWithStats } from '../utils/transforms/patientTransforms';
+import { buildPatientSearchQuery } from '../utils/queryBuilders/patientQueryBuilder';
 
 export const patientService = {
-  async getAll() {
-    const { data, error } = await supabase
-      .from(TABLES.PATIENTS)
-      .select('*')
-      .order('created_at', { ascending: false });
+  async getAll(filters = {}) {
+    try {
+      let query = supabase
+        .from(TABLES.PATIENTS)
+        .select(patientQueries.base);
 
-    if (error) throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
-    return data || [];
-  },
+      query = buildPatientSearchQuery(query, filters);
 
-  async getByTckn(tckn) {
-    const { data, error } = await supabase
-      .from(TABLES.PATIENTS)
-      .select('*')
-      .eq('tckn', tckn)
-      .single();
+      const { data, error } = await query.order('created_at', { ascending: false });
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        throw new Error(ERROR_MESSAGES.NOT_FOUND);
-      }
+      if (error) throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
+
+      return data.map(transformPatientWithStats);
+    } catch (error) {
       throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
     }
-    return data;
   },
 
-  async create(patient) {
-    // Check for duplicate TCKN
-    const { data: existing } = await supabase
-      .from(TABLES.PATIENTS)
-      .select('id')
-      .eq('tckn', patient.tckn)
-      .single();
+  async create(patientData) {
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.PATIENTS)
+        .insert([{
+          ...patientData,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
 
-    if (existing) {
-      throw new Error(ERROR_MESSAGES.DUPLICATE_TCKN);
+      if (error) throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
+      return data;
+    } catch (error) {
+      throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
     }
-
-    const { data, error } = await supabase
-      .from(TABLES.PATIENTS)
-      .insert([{
-        ...patient,
-        created_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
-
-    if (error) throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
-    return data;
   },
 
-  async update(id, patient) {
-    // Check for duplicate TCKN on other patients
-    const { data: existing } = await supabase
-      .from(TABLES.PATIENTS)
-      .select('id')
-      .eq('tckn', patient.tckn)
-      .neq('id', id)
-      .single();
+  async update(id, patientData) {
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.PATIENTS)
+        .update(patientData)
+        .eq('id', id)
+        .select()
+        .single();
 
-    if (existing) {
-      throw new Error(ERROR_MESSAGES.DUPLICATE_TCKN);
+      if (error) throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
+      return data;
+    } catch (error) {
+      throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
     }
-
-    const { data, error } = await supabase
-      .from(TABLES.PATIENTS)
-      .update(patient)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
-    return data;
   },
 
   async delete(id) {
-    // Check for existing appointments
-    const { data: appointments } = await supabase
-      .from(TABLES.APPOINTMENTS)
-      .select('id')
-      .eq('patient_id', id)
-      .limit(1);
+    try {
+      // Check for existing appointments
+      const { data: appointments } = await supabase
+        .from(TABLES.APPOINTMENTS)
+        .select('id')
+        .eq('patient_id', id)
+        .limit(1);
 
-    if (appointments?.length > 0) {
-      throw new Error('Bu hasta kaydı silinemez çünkü randevuları bulunmaktadır.');
+      if (appointments?.length > 0) {
+        throw new Error('Bu hasta kaydı silinemez çünkü randevuları bulunmaktadır.');
+      }
+
+      const { error } = await supabase
+        .from(TABLES.PATIENTS)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
+      return true;
+    } catch (error) {
+      throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
     }
-
-    const { error } = await supabase
-      .from(TABLES.PATIENTS)
-      .delete()
-      .eq('id', id);
-
-    if (error) throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
-    return true;
   }
 };
