@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { appointmentService } from '../services/appointmentService';
+import { useAppointments } from '../hooks/useAppointments';
 import PageContainer from '../components/layout/PageContainer';
 import AppointmentHeader from '../components/appointments/AppointmentHeader';
 import AppointmentForm from '../components/appointments/AppointmentForm';
@@ -13,10 +14,7 @@ export default function Appointments() {
   const [showForm, setShowForm] = useState(false);
   const [filters, setFilters] = useState({});
 
-  const { data: appointments = [], isLoading, error } = useQuery({
-    queryKey: ['appointments', filters],
-    queryFn: () => appointmentService.getAll(filters)
-  });
+  const { data: appointments = [], isLoading, error } = useAppointments(filters);
 
   const createMutation = useMutation({
     mutationFn: appointmentService.create,
