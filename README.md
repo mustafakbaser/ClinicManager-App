@@ -1,8 +1,6 @@
-# Hospital Management System
+# Clinic Manager App
 
-![Dashboard Preview](https://i.imgur.com/XYZ123.png)
-
-A modern and user-friendly hospital management system. A comprehensive web application built with React, Tailwind CSS, and Supabase.
+A modern and user-friendly clinic/hospital management system. A comprehensive web application built with React, Tailwind CSS, and Supabase.
 
 ## 🌟 Features
 
@@ -35,8 +33,8 @@ A modern and user-friendly hospital management system. A comprehensive web appli
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/hospital-management-system.git
-cd hospital-management-system
+git clone https://github.com/mustafakbaser/ClinicManager-App.git
+cd ClinicManager-App
 ```
 
 2. Install dependencies:
@@ -168,12 +166,6 @@ src/
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Contact
-
-Project Owner - [@yourusername](https://twitter.com/yourusername)
-
-Project Link: [https://github.com/yourusername/hospital-management-system](https://github.com/yourusername/hospital-management-system)
 
 ## 🙏 Acknowledgments
 
