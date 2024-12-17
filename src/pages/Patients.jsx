@@ -1,21 +1,21 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { patientService } from '../services/patientService';
+import { usePatients } from '../hooks/usePatients';
 import PageContainer from '../components/layout/PageContainer';
 import PatientHeader from '../components/patients/PatientHeader';
+import PatientFilters from '../components/patients/PatientFilters';
 import PatientForm from '../components/patients/PatientForm';
-import PatientCard from '../components/patients/PatientCard';
+import PatientList from '../components/patients/PatientList';
 
 export default function Patients() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
+  const [filters, setFilters] = useState({});
 
-  const { data: patients = [], isLoading, error } = useQuery({
-    queryKey: ['patients'],
-    queryFn: patientService.getAll
-  });
+  const { data: patients = [], isLoading, error } = usePatients(filters);
 
   const createMutation = useMutation({
     mutationFn: patientService.create,
@@ -48,6 +48,10 @@ export default function Patients() {
     setEditingPatient(null);
   };
 
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
   return (
     <PageContainer isLoading={isLoading} error={error}>
       <PatientHeader onNewPatient={() => setShowForm(true)} />
@@ -66,23 +70,23 @@ export default function Patients() {
         />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {patients.map((patient) => (
-          <PatientCard
-            key={patient.id}
-            patient={patient}
-            onEdit={(patient) => {
-              setEditingPatient(patient);
-              setShowForm(true);
-            }}
-            onDelete={(id) => {
-              if (window.confirm('Bu hasta kaydını silmek istediğinizden emin misiniz?')) {
-                deleteMutation.mutate(id);
-              }
-            }}
-          />
-        ))}
-      </div>
+      <PatientFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+      />
+
+      <PatientList
+        patients={patients}
+        onEdit={(patient) => {
+          setEditingPatient(patient);
+          setShowForm(true);
+        }}
+        onDelete={(id) => {
+          if (window.confirm('Bu hasta kaydını silmek istediğinizden emin misiniz?')) {
+            deleteMutation.mutate(id);
+          }
+        }}
+      />
     </PageContainer>
   );
 }

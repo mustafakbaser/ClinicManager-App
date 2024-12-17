@@ -5,11 +5,14 @@ export const appointmentQueries = {
     status,
     patients!appointments_patient_id_fkey (
       id,
-      name
+      name,
+      phone,
+      tckn
     ),
     staff!appointments_doctor_id_fkey (
       id,
-      name
+      name,
+      department
     ),
     departments!appointments_department_id_fkey (
       id,
