@@ -12,6 +12,7 @@ export default function AppointmentForm({ onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
     patientId: '',
     doctorId: '',
+    department: '',
     appointmentDate: new Date().toISOString().split('T')[0],
     appointmentTime: '09:00'
   });
@@ -23,7 +24,7 @@ export default function AppointmentForm({ onSubmit, onCancel }) {
   });
 
   // Fetch doctors (staff)
-  const { data: doctors = [], isLoading: isLoadingDoctors } = useQuery({
+  const { data: staff = [], isLoading: isLoadingStaff } = useQuery({
     queryKey: ['staff'],
     queryFn: staffService.getAll
   });
@@ -33,10 +34,21 @@ export default function AppointmentForm({ onSubmit, onCancel }) {
     label: `${patient.name} (${patient.tckn})`
   }));
 
-  const doctorOptions = doctors.map(doctor => ({
-    value: doctor.id,
-    label: `${doctor.name} - ${doctor.department}`
+  const staffOptions = staff.map(person => ({
+    value: person.id,
+    label: `${person.name} - ${person.department}`,
+    department: person.department
   }));
+
+  const handleDoctorChange = (e) => {
+    const doctorId = e.target.value;
+    const selectedDoctor = staff.find(s => s.id === doctorId);
+    setFormData(prev => ({
+      ...prev,
+      doctorId,
+      department: selectedDoctor?.department || ''
+    }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -44,11 +56,12 @@ export default function AppointmentForm({ onSubmit, onCancel }) {
     onSubmit({
       patientId: formData.patientId,
       doctorId: formData.doctorId,
+      department: formData.department,
       appointmentDate: appointmentDateTime
     });
   };
 
-  if (isLoadingPatients || isLoadingDoctors) {
+  if (isLoadingPatients || isLoadingStaff) {
     return <LoadingSpinner />;
   }
 
@@ -68,9 +81,9 @@ export default function AppointmentForm({ onSubmit, onCancel }) {
         <Select
           label="Doktor"
           required
-          options={doctorOptions}
+          options={staffOptions}
           value={formData.doctorId}
-          onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
+          onChange={handleDoctorChange}
           placeholder="Doktor seçiniz..."
         />
 
