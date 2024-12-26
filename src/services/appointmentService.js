@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { ERROR_MESSAGES, TABLES } from '../config/constants';
+import { ERROR_MESSAGES, STATUS, TABLES } from '../config/constants';
 import { appointmentModel } from '../models/appointment';
 import { getDepartmentByName } from './departments/departmentService';
 import { appointmentQueries } from '../models/queries/appointmentQueries';
@@ -43,5 +43,42 @@ export const appointmentService = {
     }
   },
 
-  // ... rest of the service methods remain the same
+  async updateStatus(id, status) {
+    try {
+      if (!Object.values(STATUS).includes(status)) {
+        throw new Error('Geçersiz randevu durumu');
+      }
+
+      const { data, error } = await supabase
+        .from(TABLES.APPOINTMENTS)
+        .update({ status })
+        .eq('id', id)
+        .select(appointmentQueries.base)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error(ERROR_MESSAGES.NOT_FOUND);
+      return data;
+    } catch (error) {
+      console.error('Appointment status update error:', error);
+      throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
+    }
+  },
+
+  async delete(id) {
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.APPOINTMENTS)
+        .delete()
+        .eq('id', id)
+        .select('id');
+
+      if (error) throw new Error(error.message);
+      if (!data?.length) throw new Error(ERROR_MESSAGES.NOT_FOUND);
+      return true;
+    } catch (error) {
+      console.error('Appointment deletion error:', error);
+      throw new Error(error.message || ERROR_MESSAGES.DEFAULT);
+    }
+  }
 };

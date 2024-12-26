@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Table, Thead, Tbody, Th, Td } from '../ui/Table';
 import Button from '../ui/Button';
+import { STATUS } from '../../config/constants';
 
 export default function AppointmentList({ appointments, onUpdateStatus, onDelete }) {
   return (
@@ -29,10 +30,13 @@ export default function AppointmentList({ appointments, onUpdateStatus, onDelete
             <Td>
               <Button
                 variant="secondary"
-                onClick={() => onUpdateStatus(appointment.id, appointment.status)}
+                onClick={() => onUpdateStatus(
+                  appointment.id,
+                  appointment.status === STATUS.PENDING ? STATUS.COMPLETED : STATUS.PENDING
+                )}
                 className="mr-2"
               >
-                {appointment.status === 'Bekliyor' ? 'Tamamla' : 'Beklet'}
+                {appointment.status === STATUS.PENDING ? 'Tamamla' : 'Beklet'}
               </Button>
               <Button
                 variant="danger"
