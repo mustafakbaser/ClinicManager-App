@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { format, parseISO } from 'date-fns';
 import { patientService } from '../../services/patientService';
 import { staffService } from '../../services/staffService';
 import Input from '../form/Input';
@@ -9,11 +10,14 @@ import Card from '../ui/Card';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 export default function AppointmentForm({ onSubmit, onCancel }) {
+  // Local calendar day; toISOString() would give the UTC day instead
+  const today = format(new Date(), 'yyyy-MM-dd');
+
   const [formData, setFormData] = useState({
     patientId: '',
     doctorId: '',
     department: '',
-    appointmentDate: new Date().toISOString().split('T')[0],
+    appointmentDate: today,
     appointmentTime: '09:00'
   });
 
@@ -52,7 +56,11 @@ export default function AppointmentForm({ onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const appointmentDateTime = `${formData.appointmentDate}T${formData.appointmentTime}:00`;
+    // Picked date and time are in the user's timezone; send an absolute
+    // timestamp so the timestamptz column stores the moment that was entered
+    const appointmentDateTime = parseISO(
+      `${formData.appointmentDate}T${formData.appointmentTime}`
+    ).toISOString();
     onSubmit({
       patientId: formData.patientId,
       doctorId: formData.doctorId,
@@ -92,7 +100,7 @@ export default function AppointmentForm({ onSubmit, onCancel }) {
           type="date"
           required
           value={formData.appointmentDate}
-          min={new Date().toISOString().split('T')[0]}
+          min={today}
           onChange={(e) => setFormData({ ...formData, appointmentDate: e.target.value })}
         />
 
