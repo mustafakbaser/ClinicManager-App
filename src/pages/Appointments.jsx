@@ -33,6 +33,9 @@ export default function Appointments() {
     onSuccess: () => {
       queryClient.invalidateQueries(['appointments']);
       toast.success('Randevu durumu güncellendi');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Randevu durumu güncellenirken bir hata oluştu');
     }
   });
 
@@ -41,6 +44,9 @@ export default function Appointments() {
     onSuccess: () => {
       queryClient.invalidateQueries(['appointments']);
       toast.success('Randevu başarıyla silindi');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Randevu silinirken bir hata oluştu');
     }
   });
 
