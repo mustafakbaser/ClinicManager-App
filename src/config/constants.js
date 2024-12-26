@@ -14,6 +14,10 @@ export const STATUS = {
   CANCELLED: 'İptal',
 };
 
+// Appointments only store a start time; each one is treated as a slot of this
+// length when checking a doctor's availability
+export const APPOINTMENT_DURATION_MINUTES = 30;
+
 // Error Messages
 export const ERROR_MESSAGES = {
   DEFAULT: 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
@@ -24,4 +28,5 @@ export const ERROR_MESSAGES = {
   INVALID_EMAIL: 'Geçersiz e-posta adresi.',
   INVALID_PHONE: 'Geçersiz telefon numarası.',
   REQUIRED_FIELD: 'Bu alan zorunludur.',
+  APPOINTMENT_CONFLICT: 'Seçilen doktorun bu saatte başka bir randevusu bulunmaktadır. Lütfen farklı bir saat seçin.',
 };
