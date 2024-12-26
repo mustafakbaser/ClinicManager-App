@@ -1,8 +1,30 @@
 import { supabase } from '../lib/supabase';
-import { ERROR_MESSAGES, STATUS, TABLES } from '../config/constants';
+import { APPOINTMENT_DURATION_MINUTES, ERROR_MESSAGES, STATUS, TABLES } from '../config/constants';
 import { appointmentModel } from '../models/appointment';
 import { getDepartmentByName } from './departments/departmentService';
 import { appointmentQueries } from '../models/queries/appointmentQueries';
+
+// Rejects the booking if the doctor already has a non-cancelled appointment
+// whose slot overlaps the requested one
+const ensureDoctorIsAvailable = async (doctorId, appointmentDate) => {
+  const start = new Date(appointmentDate);
+  if (Number.isNaN(start.getTime())) {
+    throw new Error('Geçersiz randevu tarihi');
+  }
+
+  const slotMs = APPOINTMENT_DURATION_MINUTES * 60 * 1000;
+  const { data, error } = await supabase
+    .from(TABLES.APPOINTMENTS)
+    .select('id, status')
+    .eq('doctor_id', doctorId)
+    .gt('appointment_date', new Date(start.getTime() - slotMs).toISOString())
+    .lt('appointment_date', new Date(start.getTime() + slotMs).toISOString());
+
+  if (error) throw new Error(error.message);
+  if (data?.some((appointment) => appointment.status !== STATUS.CANCELLED)) {
+    throw new Error(ERROR_MESSAGES.APPOINTMENT_CONFLICT);
+  }
+};
 
 export const appointmentService = {
   async getAll(filters = {}) {
@@ -18,6 +40,8 @@ export const appointmentService = {
       if (!appointmentData.department?.trim()) {
         throw new Error('Bölüm seçimi zorunludur');
       }
+
+      await ensureDoctorIsAvailable(appointmentData.doctorId, appointmentData.appointmentDate);
 
       // Get or create department
       const department = await getDepartmentByName(appointmentData.department);
