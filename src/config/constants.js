@@ -2,7 +2,6 @@
 export const TABLES = {
   DEPARTMENTS: 'departments',
   PATIENTS: 'patients',
-  DOCTORS: 'doctors',
   APPOINTMENTS: 'appointments',
   STAFF: 'staff'
 };
