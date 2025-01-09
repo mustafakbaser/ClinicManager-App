@@ -4,8 +4,17 @@ import { appointmentModel } from '../models/appointment';
 import { getDepartmentByName } from './departments/departmentService';
 import { appointmentQueries } from '../models/queries/appointmentQueries';
 
+// Postgres exclusion_violation, raised by the appointments_doctor_no_overlap
+// constraint (migrations/001) when two bookings for the same slot race
+const EXCLUSION_VIOLATION = '23P01';
+
+const toAppointmentError = (error) => new Error(
+  error.code === EXCLUSION_VIOLATION ? ERROR_MESSAGES.APPOINTMENT_CONFLICT : error.message
+);
+
 // Rejects the booking if the doctor already has a non-cancelled appointment
-// whose slot overlaps the requested one
+// whose slot overlaps the requested one. The database constraint enforces the
+// same rule; this check runs first so the user gets a clear message
 const ensureDoctorIsAvailable = async (doctorId, appointmentDate) => {
   const start = new Date(appointmentDate);
   if (Number.isNaN(start.getTime())) {
@@ -59,7 +68,7 @@ export const appointmentService = {
         .select(appointmentQueries.base)
         .single();
 
-      if (error) throw new Error(error.message);
+      if (error) throw toAppointmentError(error);
       return data;
     } catch (error) {
       console.error('Appointment creation error:', error);
@@ -80,7 +89,7 @@ export const appointmentService = {
         .select(appointmentQueries.base)
         .maybeSingle();
 
-      if (error) throw new Error(error.message);
+      if (error) throw toAppointmentError(error);
       if (!data) throw new Error(ERROR_MESSAGES.NOT_FOUND);
       return data;
     } catch (error) {

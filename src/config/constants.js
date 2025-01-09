@@ -15,7 +15,8 @@ export const STATUS = {
 };
 
 // Appointments only store a start time; each one is treated as a slot of this
-// length when checking a doctor's availability
+// length when checking a doctor's availability. The database constraint uses the
+// same length (appointment_slot() in migrations/001), so change both together
 export const APPOINTMENT_DURATION_MINUTES = 30;
 
 // Error Messages
