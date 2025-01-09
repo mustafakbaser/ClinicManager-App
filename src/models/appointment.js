@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { TABLES } from '../config/constants';
 import { appointmentQueries } from './queries/appointmentQueries';
-import { buildSearchQuery } from '../utils/queryBuilder';
+import { buildSearchQuery, getSearchTerm } from '../utils/queryBuilder';
 
 const transformAppointment = (appointment) => ({
   ...appointment,
@@ -12,9 +12,13 @@ const transformAppointment = (appointment) => ({
 
 export const appointmentModel = {
   async findAll(filters = {}) {
+    const select = getSearchTerm(filters.search)
+      ? appointmentQueries.withPatientFilter
+      : appointmentQueries.base;
+
     let query = supabase
       .from(TABLES.APPOINTMENTS)
-      .select(appointmentQueries.base);
+      .select(select);
 
     query = buildSearchQuery(query, filters);
     

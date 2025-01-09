@@ -50,6 +50,8 @@ export default function Appointments() {
     }
   });
 
+  const hasActiveFilters = Object.values(filters).some((value) => String(value ?? '').trim());
+
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -78,6 +80,9 @@ export default function Appointments() {
             deleteMutation.mutate(id);
           }
         }}
+        emptyMessage={hasActiveFilters
+          ? 'Filtrelere uygun randevu bulunamadı.'
+          : 'Henüz randevu kaydı bulunmamaktadır.'}
       />
     </PageContainer>
   );
