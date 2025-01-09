@@ -57,6 +57,7 @@ VITE_SUPABASE_API_KEY=your_supabase_api_key
    - Log in to your Supabase project
    - Open the SQL editor
    - Execute the SQL commands from `database.sql`
+   - If your database was created from an older `database.sql`, run the files in `migrations/` in order instead (each one has a matching `.rollback.sql`)
 
 6. Start the development server:
 ```bash
