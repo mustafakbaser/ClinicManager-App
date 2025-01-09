@@ -1,7 +1,15 @@
 import { addDays, parseISO, startOfDay } from 'date-fns';
 
+// Drops characters that would break the quoted PostgREST filter value or act as
+// LIKE wildcards, so the search term is always matched literally
+export const getSearchTerm = (search) => (search || '').replace(/["\\*%_]/g, '').trim();
+
+// Patient search needs the patients relation embedded as an inner join
+// (appointmentQueries.withPatientFilter), otherwise PostgREST only filters the
+// embedded patient and still returns every appointment
 export const buildSearchQuery = (query, filters) => {
-  const { date, status, search } = filters;
+  const { date, status } = filters;
+  const search = getSearchTerm(filters.search);
 
   if (date) {
     // `date` is a local calendar day (yyyy-MM-dd); filter by that day's
@@ -16,10 +24,10 @@ export const buildSearchQuery = (query, filters) => {
   }
 
   if (search) {
-    query = query.textSearch('patients.name', search, {
-      type: 'websearch',
-      config: 'english'
-    });
+    query = query.or(
+      `name.ilike."*${search}*",tckn.ilike."${search}*"`,
+      { referencedTable: 'patients' }
+    );
   }
 
   return query;

@@ -1,9 +1,8 @@
-export const appointmentQueries = {
-  base: `
+const appointmentFields = (patientJoin = '') => `
     id,
     appointment_date,
     status,
-    patients!appointments_patient_id_fkey (
+    patients!appointments_patient_id_fkey${patientJoin} (
       id,
       name,
       phone,
@@ -18,7 +17,12 @@ export const appointmentQueries = {
       id,
       name
     )
-  `,
+  `;
+
+export const appointmentQueries = {
+  base: appointmentFields(),
+  // Inner join on patients, so filtering by patient also filters the appointments
+  withPatientFilter: appointmentFields('!inner'),
   withStats: `
     id,
     appointment_date,

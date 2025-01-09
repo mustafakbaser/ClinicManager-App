@@ -4,7 +4,12 @@ import { Table, Thead, Tbody, Th, Td } from '../ui/Table';
 import Button from '../ui/Button';
 import { STATUS } from '../../config/constants';
 
-export default function AppointmentList({ appointments, onUpdateStatus, onDelete }) {
+export default function AppointmentList({
+  appointments,
+  onUpdateStatus,
+  onDelete,
+  emptyMessage = 'Henüz randevu kaydı bulunmamaktadır.'
+}) {
   return (
     <Table>
       <Thead>
@@ -47,6 +52,13 @@ export default function AppointmentList({ appointments, onUpdateStatus, onDelete
             </Td>
           </tr>
         ))}
+        {appointments.length === 0 && (
+          <tr>
+            <td colSpan={6} className="px-3 py-8 text-center text-sm text-gray-500">
+              {emptyMessage}
+            </td>
+          </tr>
+        )}
       </Tbody>
     </Table>
   );
